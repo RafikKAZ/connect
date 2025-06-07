@@ -63,7 +63,32 @@ document.addEventListener("DOMContentLoaded", function () {
         map = new ymaps.Map("map", {
             center: cityCenters[defaultCity],
             zoom: 10
+             controls: [] // отключаем все стандартные элементы
         });
+
+
+// Добавляем только поиск
+    const searchControl = new ymaps.control.SearchControl({
+      options: {
+        provider: 'yandex#search'
+      }
+    });
+    map.controls.add(searchControl);
+map.controls.add('zoomControl');
+map.controls.add('geolocationControl'
+
+
+    // Обработка выбора из поиска
+    searchControl.events.add("resultselect", function (e) {
+      const index = e.get('index');
+      searchControl.getResult(index).then(function (res) {
+        const coords = res.geometry.getCoordinates();
+        const address = res.properties.get('text');
+        map.setCenter(coords, 16);
+        setPlacemarkAndAddress(coords, address);
+      });
+    });
+             
 
         map.events.add("click", function (e) {
             const coords = e.get("coords");

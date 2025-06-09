@@ -56,12 +56,14 @@ document.addEventListener("DOMContentLoaded", function () {
         "Экибастуз": [51.723476, 75.322524]
     };
 
-      ymaps.ready(initMap);
+
+    ymaps.ready(initMap);
 
     function initMap() {
         const defaultCity = document.getElementById("city").value;
+        const defaultCityCenter = cityCenters[defaultCity];
         map = new ymaps.Map("map", {
-            center: cityCenters[defaultCity],
+            center: defaultCityCenter,
             zoom: 10
         });
 
@@ -73,8 +75,12 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("city").addEventListener("change", function () {
             const selectedCity = this.value;
             if (cityCenters[selectedCity]) {
-                map.setCenter(cityCenters[selectedCity], 10);
-                searchControl.options.set('boundedBy', map.getBounds());
+                const selectedCityCenter = cityCenters[selectedCity];
+                map.setCenter(selectedCityCenter, 10);
+                searchControl.options.set('boundedBy', [
+                    [selectedCityCenter[0] - 0.1, selectedCityCenter[1] - 0.1],
+                    [selectedCityCenter[0] + 0.1, selectedCityCenter[1] + 0.1]
+                ]);
             }
         });
 
@@ -95,7 +101,15 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hint) hint.style.display = "none";
         }
 
-        const searchControl = new ymaps.control.SearchControl({ options: { noPlacemark: true } });
+        const searchControl = new ymaps.control.SearchControl({
+            options: {
+                noPlacemark: true,
+                boundedBy: [
+                    [defaultCityCenter[0] - 0.1, defaultCityCenter[1] - 0.1],
+                    [defaultCityCenter[0] + 0.1, defaultCityCenter[1] + 0.1]
+                ]
+            }
+        });
         map.controls.add(searchControl);
 
         searchControl.events.add("resultselect", function (e) {
@@ -169,3 +183,4 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+      

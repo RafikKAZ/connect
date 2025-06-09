@@ -55,7 +55,8 @@ document.addEventListener("DOMContentLoaded", function () {
         "Щучинск": [52.934115, 70.189818],
         "Экибастуз": [51.723476, 75.322524]
     };
-ymaps.ready(initMap);
+
+    ymaps.ready(initMap);
 
     function initMap() {
         const defaultCity = document.getElementById("city").value;
@@ -88,22 +89,7 @@ ymaps.ready(initMap);
                     console.warn("Геолокация недоступна:", error.message);
                 }
             );
-        } else {
-            const hint = document.querySelector(".geo-hint");
-            if (hint) hint.style.display = "none";
         }
-
-        const searchControl = new ymaps.control.SearchControl({ options: { noPlacemark: true } });
-        map.controls.add(searchControl);
-
-        searchControl.events.add("resultselect", function (e) {
-            const index = e.get("index");
-            searchControl.getResult(index).then(function (res) {
-                const coords = res.geometry.getCoordinates();
-                map.setCenter(coords, 16);
-                setPlacemarkAndAddress(coords);
-            });
-        });
     }
 
     function createPlacemark(coords) {
@@ -112,7 +98,6 @@ ymaps.ready(initMap);
             draggable: false
         });
     }
-
     function setPlacemarkAndAddress(coords) {
         if (placemark) {
             placemark.geometry.setCoordinates(coords);
@@ -127,45 +112,118 @@ ymaps.ready(initMap);
         ymaps.geocode(coords).then(function (res) {
             const firstGeoObject = res.geoObjects.get(0);
             const address = firstGeoObject.getAddressLine();
+
             document.getElementById("address").value = address;
             document.getElementById("coordinates").value = coords.join(", ");
+
             const preview = document.getElementById("selected-address");
-            if (preview) preview.innerText = 'Выбранный адрес: ' + address;
+            if (preview) {
+                preview.innerText = 'Выбранный адрес: ' + address;
+            }
+
+            const citySelect = document.getElementById("city");
+            let detectedCity = firstGeoObject.getLocalities()[0] || firstGeoObject.getAdministrativeAreas()[0];
+
+            if (detectedCity) {
+                const detected = detectedCity.toLowerCase();
+                let matched = false;
+                for (let i = 0; i < citySelect.options.length; i++) {
+                    const optionText = citySelect.options[i].text.toLowerCase();
+                    if (optionText.includes(detected)) {
+                        citySelect.selectedIndex = i;
+                        matched = true;
+                        break;
+                    }
+                }
+
+                const detectedCityInput = document.getElementById("detected_city");
+                if (detectedCityInput) {
+                    detectedCityInput.value = detectedCity;
+                }
+
+                if (!matched) {
+                    const customOption = new Option(detectedCity, detectedCity, true, true);
+                    citySelect.add(customOption, 0);
+                    citySelect.selectedIndex = 0;
+                }
+            }
+
+            const confirmation = document.getElementById("confirmation");
+            if (confirmation) {
+                confirmation.classList.remove("hidden");
+                setTimeout(() => confirmation.classList.add("hidden"), 3000);
+            }
         });
     }
 
     document.getElementById("submissionForm").addEventListener("submit", async function (event) {
         event.preventDefault();
+
         const address = document.getElementById("address").value.trim();
         const coordinates = document.getElementById("coordinates").value.trim();
         const submitBtn = document.querySelector("#submissionForm button[type='submit']");
+
         if (address === "" || coordinates === "") {
             alert("Пожалуйста, выберите адрес дома на карте или включите геолокацию.");
             return;
         }
+
         const formData = new FormData(event.target);
         if (submitBtn) submitBtn.disabled = true;
+
         try {
             const response = await fetch("https://script.google.com/macros/s/AKfycbyvGVEFMym5wPSWUHnfhl_KN_oDnhsgvmRGSohGK1CmUF8JeHkNl_Pd8HLuglQSlSpa/exec", {
                 method: "POST",
                 body: formData,
             });
+
             if (response.ok) {
-                alert("Спасибо за заявку! Мы рассмотрим её в ближайшие несколько рабочих дней.");
+                alert("Спасибо за заявку! Мы рассмотрим её в ближайшие несколько рабочих дней.\n\nЕсли большинство жителей Вашего дома подадут заявки на подключение «Интернет Дома», мы сможем приоритизировать строительство сети по Вашему адресу.\n\nСпасибо за доверие!");
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.innerText = "Заявка отправлена";
                 }
-            } else {
-                alert("Ошибка при отправке. Пожалуйста, попробуйте ещё раз позже.");
-                if (submitBtn) submitBtn.disabled = false;
+                resetForm(false);
+                return;
             }
+
+            alert("Ошибка при отправке. Пожалуйста, попробуйте ещё раз позже.");
+            if (submitBtn) submitBtn.disabled = false;
+
         } catch (error) {
             console.error("Ошибка:", error);
             alert("Произошла ошибка при отправке данных.");
             if (submitBtn) submitBtn.disabled = false;
         }
     });
-});
 
-     
+    function resetForm(preserveDisable = true) {
+        document.getElementById("submissionForm").reset();
+        if (placemark) {
+            map.geoObjects.remove(placemark);
+            placemark = null;
+        }
+
+        const preview = document.getElementById("selected-address");
+        if (preview) preview.innerText = 'Адрес не выбран';
+
+        const confirmation = document.getElementById("confirmation");
+        if (confirmation) confirmation.classList.add("hidden");
+
+        if (!preserveDisable) {
+            const submitBtn = document.querySelector("#submissionForm button[type='submit']");
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Отправить заявку";
+            }
+        }
+    }
+
+    document.getElementById("name").addEventListener("input", function () {
+        this.value = this.value.replace(/[^А-Яа-яЁёӘәӨөҚқҢңҰұҮүҺһІі\s\-]/g, '');
+    });
+
+    document.getElementById("phone").addEventListener("input", function () {
+        this.value = this.value.replace(/[^\d]/g, '');
+    });
+});

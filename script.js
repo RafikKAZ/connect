@@ -74,23 +74,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const selectedCity = this.value;
             if (cityCenters[selectedCity]) {
                 map.setCenter(cityCenters[selectedCity], 10);
+                searchControl.options.set('boundedBy', map.getBounds());
             }
-        });
-
-        const searchControl = new ymaps.control.SearchControl({
-            options: {
-                noPlacemark: true
-            }
-        });
-        map.controls.add(searchControl);
-
-        searchControl.events.add("resultselect", function (e) {
-            const index = e.get("index");
-            searchControl.getResult(index).then(function (res) {
-                const coords = res.geometry.getCoordinates();
-                map.setCenter(coords, 16);
-                setPlacemarkAndAddress(coords);
-            });
         });
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -109,6 +94,18 @@ document.addEventListener("DOMContentLoaded", function () {
             const hint = document.querySelector(".geo-hint");
             if (hint) hint.style.display = "none";
         }
+
+        const searchControl = new ymaps.control.SearchControl({ options: { noPlacemark: true } });
+        map.controls.add(searchControl);
+
+        searchControl.events.add("resultselect", function (e) {
+            const index = e.get("index");
+            searchControl.getResult(index).then(function (res) {
+                const coords = res.geometry.getCoordinates();
+                map.setCenter(coords, 16);
+                setPlacemarkAndAddress(coords);
+            });
+        });
     }
 
     function createPlacemark(coords) {
@@ -171,3 +168,4 @@ document.addEventListener("DOMContentLoaded", function () {
             if (submitBtn) submitBtn.disabled = false;
         }
     });
+});

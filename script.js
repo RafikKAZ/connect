@@ -55,8 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "Щучинск": [52.934115, 70.189818],
         "Экибастуз": [51.723476, 75.322524]
     };
-
-      ymaps.ready(initMap);
+ymaps.ready(initMap);
 
     function initMap() {
         const defaultCity = document.getElementById("city").value;
@@ -168,3 +167,5 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+
+     

@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
 
-// добавил
+
 const searchControl = new ymaps.control.SearchControl({
     options: {
         noPlacemark: true,
@@ -90,7 +90,7 @@ const searchControl = new ymaps.control.SearchControl({
 });
 map.controls.add(searchControl);
 
-// добавил
+
 searchControl.events.add("resultselect", function (e) {
     const index = e.get("index");
     searchControl.getResult(index).then(function (res) {
@@ -100,7 +100,7 @@ searchControl.events.add("resultselect", function (e) {
     });
 });
 
-// добавил       
+      
 document.getElementById("city").addEventListener("change", function () {
     const selectedCity = this.value;
     const selectedCityCenter = cityCenters[selectedCity];

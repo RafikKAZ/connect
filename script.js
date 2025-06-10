@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "Экибастуз": [51.723476, 75.322524]
     };
 
-        ymaps.ready(initMap);
+           ymaps.ready(initMap);
 
     function initMap() {
         const citySelect = document.getElementById("city");
@@ -65,11 +65,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         map = new ymaps.Map("map", {
             center: defaultCityCenter,
-            zoom: 10
-            controls: [] // отключаем все стандартные элементы
+            zoom: 10,
+            controls: ['zoomControl', 'geolocationControl'] // Разрешенные элементы управления
         });
 
-        // SearchControl
+        // === SearchControl с ограничением по выбранному городу ===
         const searchControl = new ymaps.control.SearchControl({
             options: {
                 noPlacemark: true,
@@ -82,6 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         map.controls.add(searchControl);
 
+        // Обработка выбора результата поиска
         searchControl.events.add("resultselect", function (e) {
             const index = e.get("index");
             searchControl.getResult(index).then(function (res) {
@@ -97,6 +98,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const selectedCityCenter = cityCenters[selectedCity];
             if (selectedCityCenter) {
                 map.setCenter(selectedCityCenter, 10);
+
                 searchControl.options.set('boundedBy', [
                     [selectedCityCenter[0] - 0.1, selectedCityCenter[1] - 0.1],
                     [selectedCityCenter[0] + 0.1, selectedCityCenter[1] + 0.1]

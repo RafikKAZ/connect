@@ -56,75 +56,60 @@ document.addEventListener("DOMContentLoaded", function () {
         "Экибастуз": [51.723476, 75.322524]
     };
 
-    ymaps.ready(initMap);
+        ymaps.ready(initMap);
 
     function initMap() {
-        const defaultCity = document.getElementById("city").value;
+        const citySelect = document.getElementById("city");
+        const defaultCity = citySelect.value;
+        const defaultCityCenter = cityCenters[defaultCity];
+
         map = new ymaps.Map("map", {
-            center: cityCenters[defaultCity],
+            center: defaultCityCenter,
             zoom: 10
         });
 
+        // SearchControl
+        const searchControl = new ymaps.control.SearchControl({
+            options: {
+                noPlacemark: true,
+                boundedBy: [
+                    [defaultCityCenter[0] - 0.1, defaultCityCenter[1] - 0.1],
+                    [defaultCityCenter[0] + 0.1, defaultCityCenter[1] + 0.1]
+                ],
+                placeholderContent: 'Поиск дома в выбранном городе'
+            }
+        });
+        map.controls.add(searchControl);
+
+        searchControl.events.add("resultselect", function (e) {
+            const index = e.get("index");
+            searchControl.getResult(index).then(function (res) {
+                const coords = res.geometry.getCoordinates();
+                map.setCenter(coords, 16);
+                setPlacemarkAndAddress(coords);
+            });
+        });
+
+        // Обновление карты при смене города
+        citySelect.addEventListener("change", function () {
+            const selectedCity = this.value;
+            const selectedCityCenter = cityCenters[selectedCity];
+            if (selectedCityCenter) {
+                map.setCenter(selectedCityCenter, 10);
+                searchControl.options.set('boundedBy', [
+                    [selectedCityCenter[0] - 0.1, selectedCityCenter[1] - 0.1],
+                    [selectedCityCenter[0] + 0.1, selectedCityCenter[1] + 0.1]
+                ]);
+            }
+        });
+
+        // Клик по карте
         map.events.add("click", function (e) {
             const coords = e.get("coords");
             setPlacemarkAndAddress(coords);
         });
 
-        document.getElementById("city").addEventListener("change", function () {
-            const selectedCity = this.value;
-            if (cityCenters[selectedCity]) {
-                map.setCenter(cityCenters[selectedCity], 10);
-            }
-        });
-
-
-
-const searchControl = new ymaps.control.SearchControl({
-    options: {
-        noPlacemark: true,
-        boundedBy: [
-            [defaultCityCenter[0] - 0.1, defaultCityCenter[1] - 0.1],
-            [defaultCityCenter[0] + 0.1, defaultCityCenter[1] + 0.1]
-        ]
-    }
-});
-map.controls.add(searchControl);
-
-
-searchControl.events.add("resultselect", function (e) {
-    const index = e.get("index");
-    searchControl.getResult(index).then(function (res) {
-        const coords = res.geometry.getCoordinates();
-        map.setCenter(coords, 16);
-        setPlacemarkAndAddress(coords);
-    });
-});
-
-      
-document.getElementById("city").addEventListener("change", function () {
-    const selectedCity = this.value;
-    const selectedCityCenter = cityCenters[selectedCity];
-    if (selectedCityCenter) {
-        map.setCenter(selectedCityCenter, 10);
-        searchControl.options.set('boundedBy', [
-            [selectedCityCenter[0] - 0.1, selectedCityCenter[1] - 0.1],
-            [selectedCityCenter[0] + 0.1, selectedCityCenter[1] + 0.1]
-        ]);
-    }
-});
-
-
-
-
-
-
-        
-
-
-
-
-
-        
+        // Геолокация
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -146,6 +131,7 @@ document.getElementById("city").addEventListener("change", function () {
             draggable: false
         });
     }
+
     function setPlacemarkAndAddress(coords) {
         if (placemark) {
             placemark.geometry.setCoordinates(coords);
@@ -163,7 +149,6 @@ document.getElementById("city").addEventListener("change", function () {
 
             document.getElementById("address").value = address;
             document.getElementById("coordinates").value = coords.join(", ");
-
             const preview = document.getElementById("selected-address");
             if (preview) {
                 preview.innerText = 'Выбранный адрес: ' + address;
@@ -171,7 +156,6 @@ document.getElementById("city").addEventListener("change", function () {
 
             const citySelect = document.getElementById("city");
             let detectedCity = firstGeoObject.getLocalities()[0] || firstGeoObject.getAdministrativeAreas()[0];
-
             if (detectedCity) {
                 const detected = detectedCity.toLowerCase();
                 let matched = false;
@@ -183,12 +167,10 @@ document.getElementById("city").addEventListener("change", function () {
                         break;
                     }
                 }
-
                 const detectedCityInput = document.getElementById("detected_city");
                 if (detectedCityInput) {
                     detectedCityInput.value = detectedCity;
                 }
-
                 if (!matched) {
                     const customOption = new Option(detectedCity, detectedCity, true, true);
                     citySelect.add(customOption, 0);
@@ -204,29 +186,25 @@ document.getElementById("city").addEventListener("change", function () {
         });
     }
 
+    // Отправка формы
     document.getElementById("submissionForm").addEventListener("submit", async function (event) {
         event.preventDefault();
-
         const address = document.getElementById("address").value.trim();
         const coordinates = document.getElementById("coordinates").value.trim();
         const submitBtn = document.querySelector("#submissionForm button[type='submit']");
-
         if (address === "" || coordinates === "") {
             alert("Пожалуйста, выберите адрес дома на карте или включите геолокацию.");
             return;
         }
-
         const formData = new FormData(event.target);
         if (submitBtn) submitBtn.disabled = true;
-
         try {
-            const response = await fetch("https://script.google.com/macros/s/AKfycbyvGVEFMym5wPSWUHnfhl_KN_oDnhsgvmRGSohGK1CmUF8JeHkNl_Pd8HLuglQSlSpa/exec", {
+            const response = await fetch("https://script.google.com/macros/s/AKfycbyvGVEFMym5wPSWUHnfhl_KN_oDnhsgvmRGSohGK1CmUF8JeHkNl_Pd8HLuglQSlSpa/exec",  {
                 method: "POST",
                 body: formData,
             });
-
             if (response.ok) {
-                alert("Спасибо за заявку! Мы рассмотрим её в ближайшие несколько рабочих дней.\n\nЕсли большинство жителей Вашего дома подадут заявки на подключение «Интернет Дома», мы сможем приоритизировать строительство сети по Вашему адресу.\n\nСпасибо за доверие!");
+                alert("Спасибо за заявку! Мы рассмотрим её в ближайшие несколько рабочих дней.\n\nЕсли большинство жителей Вашего дома подадут заявки на подключение «Интернет Дома», мы сможем приоритизировать строительство сети по Вашему адресу.\nСпасибо за доверие!");
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.innerText = "Заявка отправлена";
@@ -234,10 +212,8 @@ document.getElementById("city").addEventListener("change", function () {
                 resetForm(false);
                 return;
             }
-
             alert("Ошибка при отправке. Пожалуйста, попробуйте ещё раз позже.");
             if (submitBtn) submitBtn.disabled = false;
-
         } catch (error) {
             console.error("Ошибка:", error);
             alert("Произошла ошибка при отправке данных.");
@@ -251,13 +227,10 @@ document.getElementById("city").addEventListener("change", function () {
             map.geoObjects.remove(placemark);
             placemark = null;
         }
-
         const preview = document.getElementById("selected-address");
         if (preview) preview.innerText = 'Адрес не выбран';
-
         const confirmation = document.getElementById("confirmation");
         if (confirmation) confirmation.classList.add("hidden");
-
         if (!preserveDisable) {
             const submitBtn = document.querySelector("#submissionForm button[type='submit']");
             if (submitBtn) {
@@ -267,6 +240,7 @@ document.getElementById("city").addEventListener("change", function () {
         }
     }
 
+    // Ограничения ввода
     document.getElementById("name").addEventListener("input", function () {
         this.value = this.value.replace(/[^А-Яа-яЁёӘәӨөҚқҢңҰұҮүҺһІі\s\-]/g, '');
     });

@@ -66,6 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
         map = new ymaps.Map("map", {
             center: defaultCityCenter,
             zoom: 10
+            controls: [] // отключаем все стандартные элементы
         });
 
         // SearchControl

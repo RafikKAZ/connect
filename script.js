@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const confirmation = document.getElementById("confirmation");
             if (confirmation) {
                 confirmation.classList.remove("hidden");
-                setTimeout(() => confirmation.classList.add("hidden"), 3000);
+                setTimeout(() => confirmation.classList.add("hidden"), 800000);
             }
         });
     }

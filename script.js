@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "Экибастуз": [51.723476, 75.322524]
     };
 
-           ymaps.ready(initMap);
+              ymaps.ready(initMap);
 
     function initMap() {
         const citySelect = document.getElementById("city");
@@ -65,8 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         map = new ymaps.Map("map", {
             center: defaultCityCenter,
-            zoom: 10,
-            controls: ['zoomControl', 'geolocationControl'] // Разрешенные элементы управления
+            zoom: 10
         });
 
         // === SearchControl с ограничением по выбранному городу ===
@@ -119,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 function (position) {
                     const userCoords = [position.coords.latitude, position.coords.longitude];
                     map.setCenter(userCoords, 16);
-                    setPlacemarkAndAddress(userCoords);
+                    setPlacemarkAndAddress(userCoords); // ✅ Вызывает getAddress()
                 },
                 function (error) {
                     console.warn("Геолокация недоступна:", error.message);
@@ -142,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
             placemark = createPlacemark(coords);
             map.geoObjects.add(placemark);
         }
-        getAddress(coords);
+        getAddress(coords); // ✅ Получаем адрес и обновляем интерфейс
     }
 
     function getAddress(coords) {
@@ -154,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("coordinates").value = coords.join(", ");
             const preview = document.getElementById("selected-address");
             if (preview) {
-                preview.innerText = 'Выбранный адрес: ' + address;
+                preview.innerText = 'Выбранный адрес: ' + address; // ✅ Обновление текста
             }
 
             const citySelect = document.getElementById("city");
@@ -184,7 +183,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const confirmation = document.getElementById("confirmation");
             if (confirmation) {
                 confirmation.classList.remove("hidden");
-                setTimeout(() => confirmation.classList.add("hidden"), 800000);
+                setTimeout(() => confirmation.classList.add("hidden"), 9000000);
             }
         });
     }

@@ -74,33 +74,38 @@
 <option value="Экибастуз">Экибастуз</option>
     </select>
 
-    <label for="name">ФИО:</label>
-    <input type="text" id="name" name="name" required placeholder="Например: Иванов Айдар" pattern="^[А-Яа-яЁёӘәӨөҚқҢңҰұҮүҺһІі\s\-]+$" title="Только буквы, пробелы и дефис"/>
+   <label for="name">ФИО:</label>
+    <input type="text" id="name" name="name" placeholder="Например: Иванов Айдар" />
 
     <label for="phone">Контактный номер:</label>
-    <input type="text" maxlength="11" id="phone" name="phone" required placeholder="Например: 87771234567" pattern="8\d{10}" title="Введите номер из 11 цифр, начиная с 8 (например: 877771234567)" />
+    <input type="tel" id="phone" name="Телефон" placeholder="Например: 87771234567" />
 
     <label for="housing">Тип жилья:</label>
     <select id="housing" name="housing" required>
-      <option value="">Выберите тип жилья</option>
-      <option value="Квартира">Квартира</option>
-      <option value="Частный дом">Частный дом</option>
+        <option value="">Выберите тип жилья</option>
+        <option value="Квартира">Квартира</option>
+        <option value="Частный дом">Частный дом</option>
     </select>
 
-    <input type="text" id="address" name="address" readonly required style="display: none" />
-    <input type="text" id="coordinates" name="coordinates" readonly required style="display: none" />
+    <input type="text" id="address" name="address" readonly hidden />
+    <input type="text" id="coordinates" name="coordinates" readonly hidden />
     <input type="hidden" id="detected_city" name="detected_city" />
 
     <p class="map-instruction">Выберите город, затем нажмите на нужное место на карте или воспользуйтесь поиском.</p>
     <p class="geo-hint">📍 Вы можете включить геолокацию — карта покажет ваше местоположение, а адрес заполнится автоматически.</p>
+
     <p id="selected-address" class="address-preview">Адрес не выбран</p>
+    <p id="address-required" class="address-required hidden">⚠️ Сначала выберите дом на карте</p>
 
     <div id="map"></div>
-    <div id="confirmation" class="confirmation hidden">Адрес успешно выбран ✅</div>
 
-    <button type="submit">Отправить заявку</button>
-  </form>
+    <div id="confirmation" class="confirmation hidden">📌 Адрес успешно выбран!</div>
+    <div id="success-message" class="hidden" style="color: green; font-weight: bold;">✅ Заявка успешно отправлена!</div>
 
-  <script src="script.js?v=7"></script>
+    <button id="user-location-btn" type="button">📍 Определить моё местоположение</button>
+    <button id="submit-form-btn" type="submit">Отправить заявку</button>
+</form>
+
+<script src="script.js"></script>
 </body>
 </html>

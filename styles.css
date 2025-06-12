@@ -1,4 +1,4 @@
-/* Основные стили для страницы */
+/* Основные стили */
 body {
     margin: 0;
     padding: 0;
@@ -13,7 +13,6 @@ body {
     overflow-y: auto;
 }
 
-/* Компактный заголовок */
 h1 {
     text-align: center;
     font-size: 1.5rem;
@@ -30,7 +29,6 @@ h1 {
     box-sizing: border-box;
 }
 
-/* Информационный блок */
 .info-text {
     max-width: 600px;
     width: 100%;
@@ -44,7 +42,6 @@ h1 {
     font-size: 1rem;
 }
 
-/* Контейнер формы */
 form {
     flex: 1;
     width: 100%;
@@ -58,8 +55,9 @@ form {
     overflow: hidden;
 }
 
-/* Поля формы */
-input, select, button {
+input,
+select,
+button {
     width: 100%;
     margin-bottom: 15px;
     padding: 10px;
@@ -69,23 +67,14 @@ input, select, button {
     box-sizing: border-box;
 }
 
-/* Инструкция перед картой */
-.map-instruction {
-    font-size: 1rem;
+.map-instruction,
+.geo-hint {
+    font-size: 0.9rem;
     color: #333;
-    margin-bottom: 10px;
     text-align: center;
     margin-top: 10px;
 }
 
-/* Карта */
-#map {
-    width: 100%;
-    height: 500px;
-    margin-bottom: 15px;
-}
-
-/* Предпросмотр выбранного адреса */
 .address-preview {
     font-size: 0.9rem;
     color: #0077cc;
@@ -94,7 +83,13 @@ input, select, button {
     font-weight: bold;
 }
 
-/* Подтверждение */
+.address-required {
+    color: red;
+    font-size: 0.9rem;
+    margin: -10px 0 15px;
+    text-align: center;
+}
+
 .confirmation {
     font-size: 0.9rem;
     color: #ffffff;
@@ -110,8 +105,24 @@ input, select, button {
     display: none;
 }
 
-/* Кнопка отправки */
-button {
+#user-location-btn {
+    background-color: #3f8ae7;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px auto;
+    display: block;
+    width: 100%;
+    max-width: 600px;
+}
+#user-location-btn:hover {
+    background-color: #2e70d7;
+}
+
+#submit-form-btn {
     background-color: #F8B500;
     color: white;
     border: none;
@@ -120,12 +131,16 @@ button {
     border-radius: 5px;
     transition: background-color 0.3s ease;
 }
-
-button:hover {
+#submit-form-btn:hover {
     background-color: #e09a00;
 }
 
-/* Адаптация для планшетов */
+#map {
+    width: 100%;
+    height: 500px;
+    margin-bottom: 15px;
+}
+
 @media (max-width: 768px) {
     h1 {
         font-size: 0.9rem;
@@ -146,7 +161,6 @@ button:hover {
     }
 }
 
-/* Адаптация для мобильных */
 @media (max-width: 480px) {
     h1 {
         font-size: 0.9rem;
@@ -165,12 +179,4 @@ button:hover {
         font-size: 0.8rem;
         padding: 6px;
     }
-}
-
-.geo-hint {
-    font-size: 0.85rem;
-    color: #555;
-    text-align: center;
-    margin: 4px 10px 12px;
-    line-height: 1.4;
 }

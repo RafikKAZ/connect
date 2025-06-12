@@ -56,71 +56,87 @@ document.addEventListener("DOMContentLoaded", function () {
         "Экибастуз": [51.723476, 75.322524]
     };
 
-              ymaps.ready(initMap);
+     ymaps.ready(initMap);
 
     function initMap() {
-    const citySelect = document.getElementById("city");
-    const defaultCity = citySelect.value;
-    const defaultCityCenter = cityCenters[defaultCity];
+        const citySelect = document.getElementById("city");
+        const defaultCity = citySelect.value;
+        const defaultCityCenter = cityCenters[defaultCity];
 
-    // === Указываем только нужные элементы управления ===
-    map = new ymaps.Map("map", {
-        center: defaultCityCenter,
-        zoom: 10,
-        controls: [] // Убираем все стандартные элементы управления
-    });
-
-    // Создаем и добавляем свой SearchControl
-    const searchControl = new ymaps.control.SearchControl({
-        options: {
-            noPlacemark: true,
-            boundedBy: [
-                [defaultCityCenter[0] - 0.1, defaultCityCenter[1] - 0.1],
-                [defaultCityCenter[0] + 0.1, defaultCityCenter[1] + 0.1]
-            ],
-            placeholderContent: 'Поиск дома в выбранном городе'
+        if (!defaultCityCenter) {
+            console.error("Город по умолчанию не найден:", defaultCity);
+            return;
         }
-    });
-    map.controls.add(searchControl);
 
-    // Добавляем масштабирование и геолокацию
-    map.controls.add('zoomControl');
-    map.controls.add('geolocationControl');
+        // Инициализация карты без стандартных элементов управления
+        map = new ymaps.Map("map", {
+            center: defaultCityCenter,
+            zoom: 10,
+            controls: [] // Убираем все стандартные контролы
+        });
 
-    // Обновление области поиска при смене города
-    citySelect.addEventListener("change", function () {
-        const selectedCity = this.value;
-        const selectedCityCenter = cityCenters[selectedCity];
-        if (selectedCityCenter) {
-            map.setCenter(selectedCityCenter, 10);
-            searchControl.options.set('boundedBy', [
-                [selectedCityCenter[0] - 0.1, selectedCityCenter[1] - 0.1],
-                [selectedCityCenter[0] + 0.1, selectedCityCenter[1] + 0.1]
-            ]);
-        }
-    });
+        // Добавляем нужные элементы управления
+        map.controls.add('zoomControl');
+        map.controls.add('geolocationControl');
 
-    // Клик по карте
-    map.events.add("click", function (e) {
-        const coords = e.get("coords");
-        setPlacemarkAndAddress(coords);
-    });
-
-    // Геолокация
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobile && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function (position) {
-                const userCoords = [position.coords.latitude, position.coords.longitude];
-                map.setCenter(userCoords, 16);
-                setPlacemarkAndAddress(userCoords);
-            },
-            function (error) {
-                console.warn("Геолокация недоступна:", error.message);
+        // === SearchControl с ограничением по выбранному городу ===
+        const searchControl = new ymaps.control.SearchControl({
+            options: {
+                noPlacemark: true,
+                boundedBy: [
+                    [defaultCityCenter[0] - 0.1, defaultCityCenter[1] - 0.1],
+                    [defaultCityCenter[0] + 0.1, defaultCityCenter[1] + 0.1]
+                ],
+                placeholderContent: 'Поиск дома в выбранном городе'
             }
-        );
+        });
+        map.controls.add(searchControl);
+
+        // Обработка выбора результата поиска
+        searchControl.events.add("resultselect", function (e) {
+            const index = e.get("index");
+            searchControl.getResult(index).then(function (res) {
+                const coords = res.geometry.getCoordinates();
+                map.setCenter(coords, 16);
+                setPlacemarkAndAddress(coords);
+            });
+        });
+
+        // Обновление области поиска при смене города
+        citySelect.addEventListener("change", function () {
+            const selectedCity = this.value;
+            const selectedCityCenter = cityCenters[selectedCity];
+            if (selectedCityCenter) {
+                map.setCenter(selectedCityCenter, 10);
+                searchControl.options.set('boundedBy', [
+                    [selectedCityCenter[0] - 0.1, selectedCityCenter[1] - 0.1],
+                    [selectedCityCenter[0] + 0.1, selectedCityCenter[1] + 0.1]
+                ]);
+            }
+        });
+
+        // Клик по карте
+        map.events.add("click", function (e) {
+            const coords = e.get("coords");
+            setPlacemarkAndAddress(coords);
+        });
+
+        // Геолокация
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    const userCoords = [position.coords.latitude, position.coords.longitude];
+                    map.setCenter(userCoords, 16);
+                    setPlacemarkAndAddress(userCoords);
+                },
+                function (error) {
+                    console.warn("Геолокация недоступна:", error.message);
+                }
+            );
+        }
     }
-}
+
     function createPlacemark(coords) {
         return new ymaps.Placemark(coords, {}, {
             preset: "islands#blueDotIcon",
@@ -129,27 +145,31 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function setPlacemarkAndAddress(coords) {
-        if (placemark) {
-            placemark.geometry.setCoordinates(coords);
-        } else {
-            placemark = createPlacemark(coords);
-            map.geoObjects.add(placemark);
-        }
-        getAddress(coords); // ✅ Получаем адрес и обновляем интерфейс
-    }
-
-    function getAddress(coords) {
         ymaps.geocode(coords).then(function (res) {
             const firstGeoObject = res.geoObjects.get(0);
             const address = firstGeoObject.getAddressLine();
 
+            // Удаляем старую метку, если есть
+            if (placemark) {
+                map.geoObjects.remove(placemark);
+            }
+
+            // Создаем новую метку
+            placemark = createPlacemark(coords);
+            map.geoObjects.add(placemark);
+
+            // Центрируем карту
+            map.setCenter(coords, 16);
+
+            // Обновляем поля формы и превью
             document.getElementById("address").value = address;
             document.getElementById("coordinates").value = coords.join(", ");
             const preview = document.getElementById("selected-address");
             if (preview) {
-                preview.innerText = 'Выбранный адрес: ' + address; // ✅ Обновление текста
+                preview.innerText = 'Выбранный адрес: ' + address;
             }
 
+            // Автообновление выпадающего списка городов
             const citySelect = document.getElementById("city");
             let detectedCity = firstGeoObject.getLocalities()[0] || firstGeoObject.getAdministrativeAreas()[0];
             if (detectedCity) {
@@ -177,7 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const confirmation = document.getElementById("confirmation");
             if (confirmation) {
                 confirmation.classList.remove("hidden");
-                setTimeout(() => confirmation.classList.add("hidden"), 9000000);
+                setTimeout(() => confirmation.classList.add("hidden"), 8000000);
             }
         });
     }
@@ -208,7 +228,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 resetForm(false);
                 return;
             }
-            alert("Ошибка при отправке. Пожалуйста, попробуйте ещё раз позже.");
+            alert("Ошибка при отправке. Попробуйте ещё раз позже.");
             if (submitBtn) submitBtn.disabled = false;
         } catch (error) {
             console.error("Ошибка:", error);

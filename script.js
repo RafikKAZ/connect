@@ -59,76 +59,68 @@ document.addEventListener("DOMContentLoaded", function () {
               ymaps.ready(initMap);
 
     function initMap() {
-        const citySelect = document.getElementById("city");
-        const defaultCity = citySelect.value;
-        const defaultCityCenter = cityCenters[defaultCity];
+    const citySelect = document.getElementById("city");
+    const defaultCity = citySelect.value;
+    const defaultCityCenter = cityCenters[defaultCity];
 
-        map = new ymaps.Map("map", {
-            center: defaultCityCenter,
-            zoom: 10,
-            controls: [] // отключаем все стандартные элементы
-            
-        });
+    // === Указываем только нужные элементы управления ===
+    map = new ymaps.Map("map", {
+        center: defaultCityCenter,
+        zoom: 10,
+        controls: [] // Убираем все стандартные элементы управления
+    });
 
-        // === SearchControl с ограничением по выбранному городу ===
-        const searchControl = new ymaps.control.SearchControl({
-            options: {
-                noPlacemark: true,
-                boundedBy: [
-                    [defaultCityCenter[0] - 0.1, defaultCityCenter[1] - 0.1],
-                    [defaultCityCenter[0] + 0.1, defaultCityCenter[1] + 0.1]
-                ],
-                placeholderContent: 'Поиск дома в выбранном городе'
-            }
-        });
-        map.controls.add(searchControl);
-
-        // Обработка выбора результата поиска
-        searchControl.events.add("resultselect", function (e) {
-            const index = e.get("index");
-            searchControl.getResult(index).then(function (res) {
-                const coords = res.geometry.getCoordinates();
-                map.setCenter(coords, 16);
-                setPlacemarkAndAddress(coords);
-            });
-        });
-
-        // Обновление карты при смене города
-        citySelect.addEventListener("change", function () {
-            const selectedCity = this.value;
-            const selectedCityCenter = cityCenters[selectedCity];
-            if (selectedCityCenter) {
-                map.setCenter(selectedCityCenter, 10);
-
-                searchControl.options.set('boundedBy', [
-                    [selectedCityCenter[0] - 0.1, selectedCityCenter[1] - 0.1],
-                    [selectedCityCenter[0] + 0.1, selectedCityCenter[1] + 0.1]
-                ]);
-            }
-        });
-
-        // Клик по карте
-        map.events.add("click", function (e) {
-            const coords = e.get("coords");
-            setPlacemarkAndAddress(coords);
-        });
-
-        // Геолокация
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function (position) {
-                    const userCoords = [position.coords.latitude, position.coords.longitude];
-                    map.setCenter(userCoords, 16);
-                    setPlacemarkAndAddress(userCoords); // ✅ Вызывает getAddress()
-                },
-                function (error) {
-                    console.warn("Геолокация недоступна:", error.message);
-                }
-            );
+    // Создаем и добавляем свой SearchControl
+    const searchControl = new ymaps.control.SearchControl({
+        options: {
+            noPlacemark: true,
+            boundedBy: [
+                [defaultCityCenter[0] - 0.1, defaultCityCenter[1] - 0.1],
+                [defaultCityCenter[0] + 0.1, defaultCityCenter[1] + 0.1]
+            ],
+            placeholderContent: 'Поиск дома в выбранном городе'
         }
-    }
+    });
+    map.controls.add(searchControl);
 
+    // Добавляем масштабирование и геолокацию
+    map.controls.add('zoomControl');
+    map.controls.add('geolocationControl');
+
+    // Обновление области поиска при смене города
+    citySelect.addEventListener("change", function () {
+        const selectedCity = this.value;
+        const selectedCityCenter = cityCenters[selectedCity];
+        if (selectedCityCenter) {
+            map.setCenter(selectedCityCenter, 10);
+            searchControl.options.set('boundedBy', [
+                [selectedCityCenter[0] - 0.1, selectedCityCenter[1] - 0.1],
+                [selectedCityCenter[0] + 0.1, selectedCityCenter[1] + 0.1]
+            ]);
+        }
+    });
+
+    // Клик по карте
+    map.events.add("click", function (e) {
+        const coords = e.get("coords");
+        setPlacemarkAndAddress(coords);
+    });
+
+    // Геолокация
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                const userCoords = [position.coords.latitude, position.coords.longitude];
+                map.setCenter(userCoords, 16);
+                setPlacemarkAndAddress(userCoords);
+            },
+            function (error) {
+                console.warn("Геолокация недоступна:", error.message);
+            }
+        );
+    }
+}
     function createPlacemark(coords) {
         return new ymaps.Placemark(coords, {}, {
             preset: "islands#blueDotIcon",

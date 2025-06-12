@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "Экибастуз": [51.723476, 75.322524]
     };
 
-         ymaps.ready(initMap);
+             ymaps.ready(initMap);
 
     function initMap() {
         const citySelect = document.getElementById("city");
@@ -71,16 +71,15 @@ document.addEventListener("DOMContentLoaded", function () {
         map = new ymaps.Map("map", {
             center: defaultCityCenter,
             zoom: 10,
-            controls: [] // убираем все стандартные элементы управления
+            controls: [] // убираем стандартные элементы управления
         });
 
-        // === Клик по карте ===
         map.events.add("click", function (e) {
             const coords = e.get("coords");
             setPlacemarkAndAddress(coords);
         });
 
-        // === Поиск дома через SearchControl ===
+        // === SearchControl с ограничением по выбранному городу ===
         const searchControl = new ymaps.control.SearchControl({
             options: {
                 noPlacemark: true,
@@ -102,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
 
-        // === Обновление области поиска при смене города ===
+        // Обновление области поиска при смене города
         citySelect.addEventListener("change", function () {
             const selectedCity = this.value;
             const selectedCityCenter = cityCenters[selectedCity];
@@ -115,10 +114,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // === Геолокация с вашей логикой ===
+        // === Кастомная кнопка геолокации ===
         const geolocationButton = new ymaps.control.Button({
             data: {
-                content: "Мое местоположение",
+                content: "📍 Моё местоположение",
                 title: "Определить текущее местоположение"
             },
             options: {
@@ -140,8 +139,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         setPlacemarkAndAddress(userCoords);
                     },
                     function (error) {
-                        console.warn("Геолокация недоступна:", error.message);
                         alert("Не удалось определить местоположение.");
+                        console.warn("Геолокация недоступна:", error.message);
                     }
                 );
             } else {
@@ -169,7 +168,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function createPlacemark(coords) {
         return new ymaps.Placemark(coords, {}, {
-            preset: "islands#blueDotIcon",
+            preset: "islands#redIcon", // более заметная метка
             draggable: false
         });
     }
@@ -223,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const confirmation = document.getElementById("confirmation");
             if (confirmation) {
                 confirmation.classList.remove("hidden");
-                setTimeout(() => confirmation.classList.add("hidden"), 800000);
+                setTimeout(() => confirmation.classList.add("hidden"), 3000);
             }
         });
     }
@@ -238,15 +237,21 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Пожалуйста, выберите адрес дома на карте или включите геолокацию.");
             return;
         }
+
         const formData = new FormData(event.target);
         if (submitBtn) submitBtn.disabled = true;
+
         try {
             const response = await fetch("https://script.google.com/macros/s/AKfycbyvGVEFMym5wPSWUHnfhl_KN_oDnhsgvmRGSohGK1CmUF8JeHkNl_Pd8HLuglQSlSpa/exec",  {
                 method: "POST",
                 body: formData,
             });
+
             if (response.ok) {
-                alert("Спасибо за заявку! Мы рассмотрим её в ближайшие несколько рабочих дней.\n\nЕсли большинство жителей Вашего дома подадут заявки на подключение «Интернет Дома», мы сможем приоритизировать строительство сети по Вашему адресу.\nСпасибо за доверие!");
+                const successMessage = document.getElementById("success-message");
+                if (successMessage) {
+                    successMessage.classList.remove("hidden");
+                }
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.innerText = "Заявка отправлена";
@@ -254,8 +259,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 resetForm(false);
                 return;
             }
-            alert("Ошибка при отправке. Пожалуйста, попробуйте ещё раз позже.");
+
+            alert("Ошибка при отправке. Попробуйте ещё раз.");
             if (submitBtn) submitBtn.disabled = false;
+
         } catch (error) {
             console.error("Ошибка:", error);
             alert("Произошла ошибка при отправке данных.");
